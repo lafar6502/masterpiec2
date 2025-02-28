@@ -262,6 +262,11 @@ class LCD_I2C final
      */
     void PrintString(std::string_view str) const noexcept;
 
+    /// @brief 
+    /// @param row 
+    /// @param str 
+    void PrintString(byte row, std::string_view str) const noexcept;
+
     /**
      * Prints the custom character on the display at the current cursor
      * position, by specifying the location in memory.

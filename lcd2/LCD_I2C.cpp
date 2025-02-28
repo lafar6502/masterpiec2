@@ -198,6 +198,12 @@ void LCD_I2C::PrintString(std::string_view str) const noexcept
     }
 }
 
+void LCD_I2C::PrintString(byte row, std::string_view str) const noexcept
+{
+    SetCursor(row, 0);
+    PrintString(str);
+}
+
 void LCD_I2C::PrintCustomChar(byte location) const noexcept
 {
     Send_Register_Select(location);
