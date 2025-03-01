@@ -3,6 +3,7 @@ wejścia od czujników
 - termopara 1
 - przeplyw  1
 - termostat pok 1
+- pompa co/cwu
 
 wy
 - pompa co
@@ -11,5 +12,45 @@ wy
 - dmuchawa
 - grzalka
 - pompa obieg
+- zalacz przeplywomierz
 
 - sygnal. alarmu
+
+PINY
+
+GPIO
+0 - SDA wyswietlacz I2C0
+1 - SCL wyswietlacz I2C0
+2 - pompa co
+3 - pompa cwu
+4 - pompa obieg
+5 - podajnik
+6 - dmuchawa
+7 - zapalarka
+8 - we: zalacz pompe co
+9 - we: zalacz pompe cwu
+10 - sd card spi1
+11 - sd card spi1
+12 - sd card spi1
+13 - sd card spi1
+14 - onewire data pio0
+15 - wejście termostat pok.
+16 - max6675 rx spi0
+17 - max6675 cs spi0 
+18 - max6675 SCK spi0
+19 - spi0 tx (nieuzyty)
+20 - enkoder przycisk
+21 - enkoder A
+22 - enkoder B
+23##brak
+24##brak
+25##brak
+26 - przycisk back
+27 - detektor zera
+28 ADC - input z przeplywomierza
+
+został RTC - on moze byc na i2c tym co ekran
+-zalaczanie przeplywomierza - czy moze byc na tym samym pinie co dmuchawa? NIE bo musi byc ciagly sygnal
+trzeba sprobowac sd card na tym samym spi co termopara
+
+no i koniec pinów..

@@ -4,6 +4,7 @@
 #include "pico/stdlib.h"
 #include <hardware/gpio.h>
 #include <hardware/i2c.h>
+#include "hwdefs.h"
 #include "lcd2/LCD_I2C.hpp"
 #include <memory>
 #include "screen.hpp"
@@ -48,14 +49,12 @@ int pico_led_init(void) {
 
 int g_r1 = 0, g_r2 = 0, g_pos=0;
 
-#define ROT_P1 6
-#define ROT_P2 7
 Rotary rot;
 
 void rotary_callback(uint gpio, uint32_t events) {
-    bool v1 = gpio_get(ROT_P1);
-    bool v2 = gpio_get(ROT_P2);
-    if (gpio == ROT_P1) {
+    bool v1 = gpio_get(MP_INP_ENCODER_A);
+    bool v2 = gpio_get(MP_INP_ENCODER_B);
+    if (gpio == MP_INP_ENCODER_A) {
         g_r1++;
     }
     else {
@@ -89,25 +88,24 @@ void rotary_callback(uint gpio, uint32_t events) {
 int main() {
 
     constexpr auto I2C = PICO_DEFAULT_I2C_INSTANCE();
-    constexpr auto SDA = 0;// PICO_DEFAULT_I2C_SDA_PIN;
-    constexpr auto SCL = 1;//PICO_DEFAULT_I2C_SCL_PIN;
     constexpr auto I2C_ADDRESS = 0x27;
     constexpr auto LCD_COLUMNS = 20;
     constexpr auto LCD_ROWS = 4;
 
-    gpio_init(ROT_P1);
-    gpio_set_dir(ROT_P1, false);
-    gpio_init(ROT_P2);
-    gpio_set_dir(ROT_P2, false);
-    gpio_set_irq_enabled_with_callback(ROT_P1, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
-    gpio_set_irq_enabled_with_callback(ROT_P2, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
+    gpio_init(MP_INP_ENCODER_A);
+    gpio_set_dir(MP_INP_ENCODER_A, false);
+    gpio_init(MP_INP_ENCODER_B);
+    gpio_set_dir(MP_INP_ENCODER_B, false);
+    gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
+    gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_B, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
 
-    auto lcd = std::make_unique<LCD_I2C>(I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS, I2C, SDA, SCL);
+
+    auto lcd = std::make_unique<LCD_I2C>(I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS, I2C, MP_DISPLAY_SDA, MP_DISPLAY_SCL);
 
     stdio_init_all();
 
     cout << "masterp!!\n" << endl;
-    cout << "sda " << SDA << ", SCL " << SCL << endl;
+    
 
     constexpr LCD_I2C::array HEART = {0x00, 0x0A, 0x1F, 0x1F, 0x1F, 0x0E, 0x04, 0x00};
     constexpr auto HEART_LOC = 0;
@@ -131,9 +129,12 @@ int main() {
     int d1 = 0, d2 = 0;
     
     max6675_config_t mcf = max6675_get_default_config();
+    mcf.cs = MP_MAX6675_CS;
+    mcf.sck = MP_SPI_SCK;
+    mcf.so = MP_SPI_RX;
     max6675_init(mcf);
 
-    int n = g_tempSensors.Initialize(14, pio0);
+    int n = g_tempSensors.Initialize(MP_ONEWIRE_DATA, pio0);
     if (n != 0) {
         printf("temp sensors failed to init %d\n", n);
     }
@@ -146,7 +147,7 @@ int main() {
         sleep_ms(LED_DELAY_MS);
         gpio_put(PICO_DEFAULT_LED_PIN, false);
         sleep_ms(LED_DELAY_MS);
-        cout << "sda " << SDA << ", SCL " << SCL << endl;
+        
         int evs = g_EVENTQ.GetCount();
         while(g_EVENTQ.GetCount() > 0) 
         {
