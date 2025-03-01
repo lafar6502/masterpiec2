@@ -21,6 +21,7 @@ class TempSensors
         OW _ow;
         uint8_t _numDevices = 0;
         uint _dataPin = 14;
+        int16_t _temps[TEMPSENSOR_MAXDEVS];
     public:
         TempSensors() {
 
@@ -74,9 +75,58 @@ class TempSensors
             return num_devs;
         }
 
-        
+        /// @brief request temperature read from all sensors
+        /// timing: {750,375,188,94}ms for a {12,11,10,9}-bit conversion
+        /// @param wait 
+        void RequestConversion(bool wait = true) 
+        {
+            unsigned int stm = time_us_32();
+            ow_reset (&_ow);
+            ow_send (&_ow, OW_SKIP_ROM);
+            ow_send (&_ow, DS18B20_CONVERT_T);
+            
+            // wait for the conversions to finish
+            if (wait) {
+                WaitForConversion();
+            }
+            unsigned int stm2 = time_us_32();
+            printf("conversion time %d us\n", stm2 - stm);
+        }
 
+        /// @brief 
+        /// @return -1 if timed out, 0 otherwise 
+        int WaitForConversion() {
+            int cnt = 0;
+            while (ow_read(&_ow) == 0)
+            {
+                sleep_ms(2);
+                if (++cnt > 2000) {
+                    return -1;
+                }
+            }
+            return 0;
+        }
 
+        int ReadResults(bool waitForConversion = true) {
+            if (waitForConversion) {
+                if (WaitForConversion() < 0) {
+                    return -1; //timeout
+                }
+            }
+            for (int i = 0; i < _numDevices; i += 1) {
+                ow_reset (&_ow);
+                ow_send (&_ow, OW_MATCH_ROM);
+                for (int b = 0; b < 64; b += 8) {
+                    ow_send (&_ow, romcode[i] >> b);
+                }
+                ow_send (&_ow, DS18B20_READ_SCRATCHPAD);
+                int16_t temp = 0;
+                temp = ow_read (&_ow) | (ow_read (&_ow) << 8);
+                printf ("\t%d: %f", i, temp / 16.0);
+                _temps[i] = temp;
+            }
+            return _numDevices;
+        }
 
 };
 
