@@ -15,7 +15,7 @@
 //4 - pompa obieg
 #define MP_PUMP_CIRC 4
 //5 - podajnik
-#define MP_STOKER    5
+#define MP_STOKER    10
 //6 - dmuchawa
 #define MP_BLOWER    6
 //7 - zapalarka
@@ -25,7 +25,7 @@
 //9 - we: zalacz pompe cwu
 #define MP_INP_PUMP_CWU 9
 //10 - sd card cs
-#define MP_SDCARD_CS 10
+#define MP_SDCARD_CS 5
 //11 - sd card spi1
 //12 - sd card spi1
 //13 - sd card spi1

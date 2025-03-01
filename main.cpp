@@ -16,6 +16,7 @@
 extern "C" {
 #include "include/events.h"
 #include "max6675/max6675.h"
+#include "ff.h"
 }
 #include "TempSensors.hpp"
 
@@ -82,8 +83,36 @@ void rotary_callback(uint gpio, uint32_t events) {
     }
     
 }
-    
 
+int n0 = 0;
+void test_file_write() {
+    FATFS fs;
+    FRESULT fr = f_mount(&fs, "", 1);
+    if (FR_OK != fr) {
+        panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+    }
+
+    // Open a file and write to it
+    FIL fil;
+    const char* const filename = "filename.txt";
+    fr = f_open(&fil, filename, FA_OPEN_APPEND | FA_WRITE);
+    if (FR_OK != fr && FR_EXIST != fr) {
+        panic("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
+    }
+    if (f_printf(&fil, "Hello, world! %d\n", n0++) < 0) {
+        printf("f_printf failed\n");
+    }
+
+    // Close the file
+    fr = f_close(&fil);
+    if (FR_OK != fr) {
+        printf("f_close error: %s (%d)\n", FRESULT_str(fr), fr);
+    }
+
+    // Unmount the SD card
+    f_unmount("");
+    
+}
 
 int main() {
 
@@ -99,14 +128,17 @@ int main() {
     gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
     gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_B, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
 
-
+    
     auto lcd = std::make_unique<LCD_I2C>(I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS, I2C, MP_DISPLAY_SDA, MP_DISPLAY_SCL);
 
     stdio_init_all();
 
     cout << "masterp!!\n" << endl;
-    
+    sleep_ms(1000);
 
+    if (!sd_init_driver()) {
+        panic("failed to init driver");
+    }
     constexpr LCD_I2C::array HEART = {0x00, 0x0A, 0x1F, 0x1F, 0x1F, 0x0E, 0x04, 0x00};
     constexpr auto HEART_LOC = 0;
     lcd->CreateCustomChar(HEART_LOC, HEART);
@@ -132,7 +164,15 @@ int main() {
     mcf.cs = MP_MAX6675_CS;
     mcf.sck = MP_SPI_SCK;
     mcf.so = MP_SPI_RX;
-    max6675_init(mcf);
+    if (false) {
+        max6675_init(mcf);
+    }
+    else {
+        gpio_init(mcf.cs);
+        gpio_set_dir(mcf.cs, GPIO_OUT);
+        printf("max6675 spi already inited %d sck %d so %d cs %d\r\n", mcf.spi_bus, mcf.sck, mcf.so, mcf.cs);
+    }
+    
 
     int n = g_tempSensors.Initialize(MP_ONEWIRE_DATA, pio0);
     if (n != 0) {
@@ -164,6 +204,10 @@ int main() {
         float ft = max6675_get_temp_c(&mcf);
         s = "temp:" + std::to_string(ft);
         lcd -> PrintString(3, s);
-
+        if (g_pos == -7) {
+            printf("testing file..\n");
+            test_file_write();
+        }
+        
     }
 }

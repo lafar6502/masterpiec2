@@ -67,6 +67,8 @@
         "text_encoding": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "rp2040_sdio.h": "c",
+        "sd_card.h": "c"
     }
 }
