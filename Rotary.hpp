@@ -1,4 +1,19 @@
-#include "Rotary.hpp"
+
+
+#ifndef rotary_h
+#define rotary_h
+
+
+// Values returned by 'process'
+// No complete step yet.
+#define DIR_NONE 0x0
+// Clockwise step.
+#define DIR_CW 0x10
+// Anti-clockwise step.
+#define DIR_CCW 0x20
+
+// Enable this to emit codes twice per step.
+#define HALF_STEP
 
 #define R_START 0x0
 
@@ -51,19 +66,27 @@ const unsigned char ttable[7][4] = {
 #endif
 
 
-/*
- * Constructor. Each arg is the pin number for each encoder contact.
- */
-Rotary::Rotary() {
-    // Initialise state.
-    state = R_START;
-}
-  
-  unsigned char Rotary::process(bool v1, bool v2) {
-    // Grab state of input pins.
-    unsigned char pinstate = (v2 << 1) | v1;
-    // Determine new state from the pins and state table.
-    state = ttable[state & 0xf][pinstate];
-    // Return emit bits, ie the generated event.
-    return state & 0x30;
-  }
+
+
+
+class Rotary
+{
+  public:
+    Rotary() {
+        state = R_START;
+    }
+    // Process pin(s)
+    unsigned char process(bool v1, bool v2) 
+    {
+        // Grab state of input pins.
+        unsigned char pinstate = (v2 << 1) | v1;
+        // Determine new state from the pins and state table.
+        state = ttable[state & 0xf][pinstate];
+        // Return emit bits, ie the generated event.
+        return state & 0x30;
+    }
+  private:
+    unsigned char state;
+};
+
+#endif

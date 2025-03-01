@@ -7,11 +7,15 @@
 #include "lcd2/LCD_I2C.hpp"
 #include <memory>
 #include "screen.hpp"
-#include "rotary/Rotary.hpp"
+#include "Rotary.hpp"
+#include "CircularBuffer.hpp"
 #include "pico/binary_info.h"
+
 extern "C" {
+#include "include/events.h"
 #include "max6675/max6675.h"
 }
+#include "TempSensors.hpp"
 
 
 using namespace std;
@@ -20,7 +24,12 @@ using namespace std;
 #error "NO PICO_DEFAULT_I2C_INSTANCE"
 #endif
 
-#define LED_DELAY_MS 500
+mp_event _event_buffer[100];
+CircularBuffer<mp_event> g_EVENTQ(_event_buffer, sizeof(_event_buffer)/sizeof(mp_event));
+
+TempSensors g_tempSensors;
+
+#define LED_DELAY_MS 200
 
 // Perform initialisation
 int pico_led_init(void) {
@@ -57,15 +66,25 @@ void rotary_callback(uint gpio, uint32_t events) {
     switch(d) {
         case DIR_CW:
             g_pos++;
+            mp_event e;
+            e.code = 1;
+            e.i_arg = g_pos;
+            g_EVENTQ.Enqueue(e);
             break;
         case DIR_CCW:
             g_pos--;
+            e.code = 2;
+            e.i_arg = g_pos;
+            g_EVENTQ.Enqueue(e);
             break;
         case DIR_NONE:
             break;
     }
+    
 }
     
+
+
 int main() {
 
     constexpr auto I2C = PICO_DEFAULT_I2C_INSTANCE();
@@ -113,6 +132,13 @@ int main() {
     max6675_config_t mcf = max6675_get_default_config();
     max6675_init(mcf);
 
+    int n = g_tempSensors.Initialize(14, pio0);
+    if (n != 0) {
+        printf("temp sensors failed to init %d\n", n);
+    }
+    else {
+        printf("temp sensors inited.. sensors found:\n", g_tempSensors.GetSensorCount());
+    }
 
     while (true) {
         gpio_put(PICO_DEFAULT_LED_PIN, true);
@@ -120,7 +146,14 @@ int main() {
         gpio_put(PICO_DEFAULT_LED_PIN, false);
         sleep_ms(LED_DELAY_MS);
         cout << "sda " << SDA << ", SCL " << SCL << endl;
-        std::string s = "cnt:" + std::to_string(cnt++) + " ";
+        int evs = g_EVENTQ.GetCount();
+        while(g_EVENTQ.GetCount() > 0) 
+        {
+            const mp_event& ev = g_EVENTQ.Dequeue();
+            printf("event %d, %d\r\n", ev.code, ev.i_arg);
+        }
+        
+        std::string s = "dal:" + std::to_string(g_tempSensors.GetSensorCount()) + " evs:" + std::to_string(evs) + " ";
         lcd->PrintString(0, s);
         s = "r1:" + std::to_string(g_r1) + ", r2:" + std::to_string(g_r2) + " ";
         lcd->PrintString(1, s);
@@ -129,5 +162,6 @@ int main() {
         float ft = max6675_get_temp_c(&mcf);
         s = "temp:" + std::to_string(ft);
         lcd -> PrintString(3, s);
+
     }
 }

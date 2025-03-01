@@ -1,0 +1,15 @@
+wejścia od czujników
+- DS18 temp - piec, powrot, cwu, podajnik, co/buf (5) - 
+- termopara 1
+- przeplyw  1
+- termostat pok 1
+
+wy
+- pompa co
+- pompa cwu
+- podajnik
+- dmuchawa
+- grzalka
+- pompa obieg
+
+- sygnal. alarmu
