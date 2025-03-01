@@ -10,6 +10,7 @@
 #include "Rotary.hpp"
 #include "CircularBuffer.hpp"
 #include "pico/binary_info.h"
+#include "FatFsSd.h"
 
 extern "C" {
 #include "include/events.h"
