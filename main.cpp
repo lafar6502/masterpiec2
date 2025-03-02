@@ -16,6 +16,7 @@
 extern "C" {
 #include "include/events.h"
 #include "max6675/max6675.h"
+#include "f_util.h"
 #include "ff.h"
 }
 #include "TempSensors.hpp"
@@ -114,7 +115,131 @@ void test_file_write() {
     
 }
 
-int main() {
+void test_simplefs() 
+{
+    // See FatFs - Generic FAT Filesystem Module, "Application Interface",
+    // http://elm-chan.org/fsw/ff/00index_e.html
+    FATFS fs;
+    FRESULT fr = f_mount(&fs, "", 1);
+    if (FR_OK != fr) {
+        printf("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+        return;
+    }
+
+    // Open a file and write to it
+    FIL fil;
+    const char* const filename = "filename.txt";
+    fr = f_open(&fil, filename, FA_OPEN_APPEND | FA_WRITE);
+    if (FR_OK != fr && FR_EXIST != fr) {
+        printf("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
+        return;
+    }
+    if (f_printf(&fil, "Hello, world!\n") < 0) {
+        printf("f_printf failed\n");
+    }
+
+    // Close the file
+    fr = f_close(&fil);
+    if (FR_OK != fr) {
+        printf("f_close error: %s (%d)\n", FRESULT_str(fr), fr);
+    }
+
+    // Unmount the SD card
+    fr = f_unmount("");
+    if (FR_OK != fr) {
+        printf("unmount error: %s (%d)\n", FRESULT_str(fr), fr);
+    }
+
+}
+
+void test_fatfs() {
+
+    sd_card_t* pcard = sd_get_by_num(0);
+    FatFsNs::SdCard *card = FatFsNs::FatFs::add_sd_card(pcard);
+    if (card == NULL) {
+        printf("init 1 fail null card\n");
+        return;
+    }
+    printf("mount..\n");
+    FRESULT fr = card->mount();
+    if (fr != FR_OK) {
+        printf("mount fail %d\n", fr);
+        return;
+    }
+    FatFsNs::File file;
+    char const* const filename = "filename.txt";
+    fr = file.open(filename, FA_OPEN_APPEND | FA_WRITE);
+    if (fr != FR_OK) {
+        printf("file open fail %d\n", fr);
+        return;
+    }
+    char const* const str = "Hello, world!\n";
+    if (file.printf(str) < strlen(str)) {
+        printf("file write fail len\n");
+    }
+    else {
+        printf("written\n");
+    }
+    fr = file.close();
+    if (fr != FR_OK) {
+        printf("file close fail %d\n", fr);
+    }
+    fr = card->unmount();
+    if (fr != FR_OK) {
+        printf("unmount fail %d\n", fr);
+    }
+    printf("test done\n");
+}
+
+int main() 
+{
+
+    stdio_init_all();
+    sleep_ms(5000);
+    printf("start initing sd driver\n");
+
+    //if (!sd_init_driver()) {
+    //    panic("failed to init driver");
+    //}
+    printf("initing max6675\n");
+    max6675_config_t mcf = max6675_get_default_config();
+    mcf.cs = MP_MAX6675_CS;
+    mcf.sck = MP_SPI_SCK;
+    mcf.so = MP_SPI_RX;
+    if (false) {
+        max6675_init(mcf);
+    }
+    else {
+        gpio_init(mcf.cs);
+        gpio_set_dir(mcf.cs, GPIO_OUT);
+        printf("max6675 spi already inited %d sck %d so %d cs %d\r\n", mcf.spi_bus, mcf.sck, mcf.so, mcf.cs);
+    }
+    
+    bool bb = false;
+    gpio_put(MP_MAX6675_CS, bb);
+    while(true) {
+        
+        
+        sleep_ms(5000);
+        printf("write test %d\n", bb);
+        //test_file_write();
+        //test_fatfs();
+        test_simplefs();
+        printf("done\n");
+        sleep_ms(1000);
+        if (true) {
+            printf("try read temp\n");
+            float ft = max6675_get_temp_c(&mcf);
+            printf("temp read %f\n", ft);
+        }
+        //gpio_put(MP_MAX6675_CS, bb);
+        //bb=!bb;
+    }
+
+    return 0;
+}
+
+int main0() {
 
     constexpr auto I2C = PICO_DEFAULT_I2C_INSTANCE();
     constexpr auto I2C_ADDRESS = 0x27;

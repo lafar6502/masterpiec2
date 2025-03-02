@@ -4,6 +4,7 @@
 message("PICO_SDK_PATH IS $ENV{PICO_SDK_PATH}")
 set(PROJECT masterp2)
 cmake_minimum_required(VERSION 3.12)
+add_compile_definitions(USE_PRINTF USE_DBG_PRINTF)
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 project(${PROJECT} C CXX ASM)
 pico_sdk_init()

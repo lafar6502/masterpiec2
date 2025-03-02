@@ -9,7 +9,7 @@ static spi_t spi = {
     .miso_gpio = MP_SPI_RX,
     //.baud_rate = 125 * 1000 * 1000 / 8  // 15625000 Hz
     //.baud_rate = 125 * 1000 * 1000 / 6  // 20833333 Hz
-    .baud_rate = 4000000 // 125 * 1000 * 1000 / 4  // 31250000 Hz
+    .baud_rate =  4 * 1000 * 1000  // 31250000 Hz
     //.baud_rate = 125 * 1000 * 1000 / 2  // 62500000 Hz
 };
 
@@ -43,6 +43,7 @@ sd_card_t *sd_get_by_num(size_t num) {
         return &sd_card;
     } else {
         // The number is invalid. Return @c NULL.
+        printf("!nullcard\n");
         return NULL;
     }
 }
