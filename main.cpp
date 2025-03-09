@@ -18,8 +18,10 @@ extern "C" {
 #include "max6675/max6675.h"
 #include "f_util.h"
 #include "ff.h"
+#include "util.h"
 }
 #include "TempSensors.hpp"
+#include "I2CPortExpander.hpp"
 
 
 using namespace std;
@@ -83,6 +85,26 @@ void rotary_callback(uint gpio, uint32_t events) {
             break;
     }
     
+}
+
+void gpio_extender_callback(uint gpio, uint32_t events) {
+    bool v1 = gpio_get(gpio);
+    printf("EXT %d %d ev%d\n", gpio, v1, events);
+}
+
+void gpio_callback(uint gpio, uint32_t events) {
+
+    if (gpio == MP_INP_ENCODER_A || gpio == MP_INP_ENCODER_B) {
+        rotary_callback(gpio, events);
+        return;
+    }
+    else if (gpio == MP_EXTENDER_INT) {
+        gpio_extender_callback(gpio, events);
+        return;
+    }
+    else {
+        printf("unexpected intr pin%d : %d\n", gpio, events);
+    }
 }
 
 int n0 = 0;
@@ -191,7 +213,7 @@ void test_fatfs() {
     printf("test done\n");
 }
 
-int main() 
+int main0() 
 {
 
     stdio_init_all();
@@ -239,7 +261,7 @@ int main()
     return 0;
 }
 
-int main0() {
+int main() {
 
     constexpr auto I2C = PICO_DEFAULT_I2C_INSTANCE();
     constexpr auto I2C_ADDRESS = 0x27;
@@ -248,21 +270,47 @@ int main0() {
 
     gpio_init(MP_INP_ENCODER_A);
     gpio_set_dir(MP_INP_ENCODER_A, false);
+    gpio_pull_up(MP_INP_ENCODER_A);
     gpio_init(MP_INP_ENCODER_B);
     gpio_set_dir(MP_INP_ENCODER_B, false);
-    gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
-    gpio_set_irq_enabled_with_callback(MP_INP_ENCODER_B, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &rotary_callback);
+    gpio_pull_up(MP_INP_ENCODER_B);
 
+    gpio_set_irq_callback(gpio_callback);
+
+    gpio_set_irq_enabled(MP_INP_ENCODER_A, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+    gpio_set_irq_enabled(MP_INP_ENCODER_B, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+
+    gpio_init(MP_INP_ENCODER_BTN);
+    gpio_set_dir(MP_INP_ENCODER_BTN, false);
+    gpio_pull_up(MP_INP_ENCODER_BTN);
     
+    gpio_init(MP_EXTENDER_INT);
+    gpio_set_dir(MP_EXTENDER_INT, false);
+    gpio_pull_up(MP_EXTENDER_INT);
+    gpio_set_irq_enabled(MP_EXTENDER_INT, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true);
+    irq_set_enabled(IO_IRQ_BANK0, true);
+    
+    stdio_init_all();
+    if (true) {
+        printf("scan i2c\n");
+        sleep_ms(5000);
+        scan_i2c_bus(I2C, MP_DISPLAY_SDA, MP_DISPLAY_SCL);
+        printf("i2c scan done\n");
+    }
+    
+
     auto lcd = std::make_unique<LCD_I2C>(I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS, I2C, MP_DISPLAY_SDA, MP_DISPLAY_SCL);
 
-    stdio_init_all();
+    
+
+    I2CPortExpander expander(I2C, 0x24);
+    
 
     cout << "masterp!!\n" << endl;
-    sleep_ms(1000);
+    sleep_ms(5000);
 
     if (!sd_init_driver()) {
-        panic("failed to init driver");
+        panic("failed to init sd card driver");
     }
     constexpr LCD_I2C::array HEART = {0x00, 0x0A, 0x1F, 0x1F, 0x1F, 0x0E, 0x04, 0x00};
     constexpr auto HEART_LOC = 0;
@@ -292,7 +340,7 @@ int main0() {
     if (false) {
         max6675_init(mcf);
     }
-    else {
+    else if (false) {
         gpio_init(mcf.cs);
         gpio_set_dir(mcf.cs, GPIO_OUT);
         printf("max6675 spi already inited %d sck %d so %d cs %d\r\n", mcf.spi_bus, mcf.sck, mcf.so, mcf.cs);
@@ -312,7 +360,7 @@ int main0() {
         sleep_ms(LED_DELAY_MS);
         gpio_put(PICO_DEFAULT_LED_PIN, false);
         sleep_ms(LED_DELAY_MS);
-        
+        expander.Read();
         int evs = g_EVENTQ.GetCount();
         while(g_EVENTQ.GetCount() > 0) 
         {
@@ -322,17 +370,22 @@ int main0() {
         
         std::string s = "dal:" + std::to_string(g_tempSensors.GetSensorCount()) + " evs:" + std::to_string(evs) + " ";
         lcd->PrintString(0, s);
-        s = "r1:" + std::to_string(g_r1) + ", r2:" + std::to_string(g_r2) + " ";
+        s = "exp:" + std::to_string(expander.GetAllPins()) + ", r2:" + std::to_string(g_r2) + " ";
         lcd->PrintString(1, s);
         s = "pos:" + std::to_string(g_pos) + " ";
         lcd -> PrintString(2, s);
         float ft = max6675_get_temp_c(&mcf);
         s = "temp:" + std::to_string(ft);
         lcd -> PrintString(3, s);
-        if (g_pos == -7) {
+        if (g_pos == -8) {
             printf("testing file..\n");
             test_file_write();
         }
-        
+        if (evs > 0) {
+            printf("updating expander pins %d\n", g_pos);
+            expander.SetAllPins(g_pos);
+            expander.Write();
+        }
+        printf(".\n");
     }
 }

@@ -22,14 +22,17 @@
 #define MP_IGNITER    7
 //8,9 wolny
 
-//10 - przycisk back
-#define MP_INP_BACK_BTN 10
+//10 - interrupt extendera
+#define MP_EXTENDER_INT 10
+//11 - detektor zera
+#define MP_INP_ZERO_DET 11
+
 //11 - we: zalacz pompe co
-#define MP_INP_PUMP_CO  11
+#define MP_INP_PUMP_CO  xx11
 //12 - we: zalacz pompe cwu
-#define MP_INP_PUMP_CWU 12
-//13 - enkoder przycisk
-#define MP_INP_ENCODER_BTN 13
+#define MP_INP_PUMP_CWU xx12
+//13
+
 //14 - onewire data pio0
 #define MP_ONEWIRE_DATA   14
 //15 - wejście termostat pok.
@@ -51,9 +54,9 @@
 //23##brak
 //24##brak
 //25##brak
-//26 wolny
-//27 - detektor zera
-#define MP_INP_ZERO_DET 27
+//26
+#define MP_INP_ENCODER_BTN 26
+//27 
 //28 ADC - input z przeplywomierza
 #define MP_INP_FLOW_VOL 28
 

@@ -8,6 +8,7 @@
  ******************************************************************************/
 
 #include "LCD_I2C.hpp"
+#include <stdio.h>
 
 LCD_I2C::LCD_I2C(byte address, byte columns, byte rows, i2c_inst * I2C, uint SDA, uint SCL) noexcept
         : address(address), columns(columns), rows(rows), backlight(NO_BACKLIGHT), I2C_instance(I2C)
@@ -27,7 +28,10 @@ inline void LCD_I2C::I2C_Write_Byte(byte val) const noexcept
     static byte data;
 
     data = val | backlight;
-    i2c_write_blocking(I2C_instance, address, &data, 1, false);
+    int n = i2c_write_blocking(I2C_instance, address, &data, 1, false);
+    if (n != 1) {
+        printf("i2c_write_byte expect 1%d\n", n);
+    }
 }
 
 void LCD_I2C::Pulse_Enable(byte val) const noexcept

@@ -13,7 +13,7 @@
 #define DIR_CCW 0x20
 
 // Enable this to emit codes twice per step.
-#define HALF_STEP
+//#define HALF_STEP
 
 #define R_START 0x0
 
