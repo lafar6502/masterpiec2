@@ -20,7 +20,8 @@
 #define MP_BLOWER    6
 //7 - zapalarka
 #define MP_IGNITER    7
-//8,9 wolny
+//8 - control chan 
+//9 - control chan
 
 //10 - interrupt extendera
 #define MP_EXTENDER_INT 10

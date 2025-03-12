@@ -54,3 +54,40 @@ został RTC - on moze byc na i2c tym co ekran
 trzeba sprobowac sd card na tym samym spi co termopara
 
 no i koniec pinów..
+
+
+//peryferia z tyłu
+
+9x2 pin - termometry
+
+
+przepływomierz 5pin
+gnd
+12v
+5v
+input 
+input2 / R
+
+we/wy 9pin
+termostat   in
+pompa co    in
+pompa cwu   in
+alarm       out
+alarm2      out
+
+gnd
+3.3v
+5v
+
+termopara 2pin
+
+
+gnd
+3.3v
+5v
+12v dla przepływomierza
+
+
+SPI:
+RX - MISO, SO
+TX - MOSI

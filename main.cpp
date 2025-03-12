@@ -340,7 +340,7 @@ int main() {
     if (false) {
         max6675_init(mcf);
     }
-    else if (false) {
+    else if (true) {
         gpio_init(mcf.cs);
         gpio_set_dir(mcf.cs, GPIO_OUT);
         printf("max6675 spi already inited %d sck %d so %d cs %d\r\n", mcf.spi_bus, mcf.sck, mcf.so, mcf.cs);
@@ -355,6 +355,9 @@ int main() {
         printf("temp sensors inited.. sensors found:\n", g_tempSensors.GetSensorCount());
     }
 
+    bool bb = false;
+    gpio_put(MP_MAX6675_CS, bb);
+    printf("max 6675 cs %d\n", bb);
     while (true) {
         gpio_put(PICO_DEFAULT_LED_PIN, true);
         sleep_ms(LED_DELAY_MS);
