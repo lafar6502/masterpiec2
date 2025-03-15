@@ -82,12 +82,13 @@ gnd
 termopara 2pin
 
 
-gnd
-3.3v
-5v
-12v dla przepływomierza
+cholerny wtyk na płytce
 
-
-SPI:
-RX - MISO, SO
-TX - MOSI
+5V 
+3.3V 
+GND 
+INP ADC (przeplyw) gpio 27
+wolny
+wolny
+1wire zolty gpio 15  
+thermc data nieb  gpio 14 

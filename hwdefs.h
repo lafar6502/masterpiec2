@@ -57,8 +57,10 @@
 //25##brak
 //26
 #define MP_INP_ENCODER_BTN 26
-//27 
-//28 ADC - input z przeplywomierza
-#define MP_INP_FLOW_VOL 28
+ 
+//27 ADC - input z przeplywomierza
+#define MP_INP_FLOW_VOL 27
+
+//28
 
 #endif
